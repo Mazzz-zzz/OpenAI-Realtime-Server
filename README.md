@@ -1,4 +1,4 @@
-# Socket.IO Chat with OpenAI
+# Socket.IO Websocket server boilerplate for OPENAI realtime api
 
 This project is a real-time chat application that uses Socket.IO for communication and integrates with the new realtime OpenAI API for AI-powered responses automatic responses. It features both text and audio responses from the AI.
 
