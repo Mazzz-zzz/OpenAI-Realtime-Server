@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Socket.IO Chat with OpenAI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { max-width: 600px; margin: 0 auto 20px; }
+    #messages div { margin-bottom: 10px; }
+    #messages .user { text-align: right; }
+    #messages .ai { text-align: left; }
+    #chat-form { display: flex; justify-content: center; }
+    #message-input { width: 80%; padding: 10px; }
+    button { padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Chat with AI</h1>
+  <div id="messages"></div>
+  <form id="chat-form">
+    <input id="message-input" autocomplete="off" placeholder="Type your message here..." />
+    <button type="submit">Send</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
