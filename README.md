@@ -1,8 +1,9 @@
-# Socket.IO Websocket server boilerplate for OPENAI realtime api
-
-This project is a real-time chat application that uses Socket.IO for communication and integrates with the new realtime OpenAI API for AI-powered responses automatic responses. It features both text and audio responses from the AI.
+# Socket.IO Websocket server boilerplate for OpenAI realtime api
+Websocket server boilerplate for interacting with a variety of clients, with support for text and audio responses from OPENAI realtime api.
 
 I created this package because directly interacting, and passing headers in the websocket in the web or React native implentations is not straightforward.
+
+-> You should be able to use this with react native, and with web applications.
 
 This uses the socket.io framework to fetch realtime api data from openai, and then pass it back to the application or device.
 
