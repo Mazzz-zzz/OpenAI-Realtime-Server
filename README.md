@@ -25,8 +25,8 @@ Before you begin, ensure you have met the following requirements:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/socket-io-chat-openai.git
-   cd socket-io-chat-openai
+   https://github.com/Mazzz-zzz/OpenAI-Realtime-Server.git
+   cd OpenAI-Realtime-Server
    ```
 
 2. Install the dependencies:
