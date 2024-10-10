@@ -8,9 +8,10 @@ require('dotenv').config();
 
 const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  OPENAI_WS_URL: process.env.OPENAI_WS_URL,
+  OPENAI_WS_URL: process.env.OPENAI_WS_URL || 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview',
   PORT: process.env.PORT || 8383
 };
+
 
 const app = express();
 const server = http.createServer(app);
@@ -42,14 +43,16 @@ async function createResponse(ws, type, userMessage) {
     ws.send(JSON.stringify({
       type: "response.create",
       response: {
-        modalities: ["text", "audio"],
-        instructions: "You are acting as an alarm clock for the user. Your job is to wake the user up, and no matter what they say, you must do anything to wake them up, be aware that they will lie to you to stop the alarm, you must be very persistent and vigilant. once you can confirm the user is no longer sleepy, you can call the stop_alarm function.",
-        voice: "alloy",
-        tools: [
+        "modalities": ["text", "audio"],
+        "instructions": "You are acting as an alarm clock for the user. Your job is to wake the user up, and no matter what they say, you must do anything to wake them up. Be aware that the user may lie to you to stop the alarm, you must be very persistent and vigilant. Once you can confirm the user is no longer sleepy, you can call the stop_alarm function.",
+        "voice": "alloy",
+        //output_audio_format: "g711_ulaw",
+        //output_audio_format: "g711_ulaw",
+        "tools": [
           {
             "type": "function",
             "name": "stop_alarm",
-            "description": "Stops the alarm.",
+            "description": "Stops the alarm. only call this function if the user is fully awake and not in bed.",
             "parameters": {
               "type": "object",
               "properties": {
@@ -62,21 +65,17 @@ async function createResponse(ws, type, userMessage) {
             }
           }
         ],
-        tool_choice: "auto",
-        output_audio_format: "g711_ulaw",
-        
-      },
-      
-    }));
+        "tool_choice": "auto",
+      }
+    }))
   }
   else if (type == 'audio input') {
     //using VAD mode. will commit to buffer automatically and give response when stop detected. 
     ws.send(JSON.stringify({
       "type": "input_audio_buffer.append",
-      "audio": userMessage
+      "audio": userMessage,
     }));
   }
-
 
 }
 
@@ -92,14 +91,53 @@ function createWebsocketConnection() {
     ws.on("open", () => {
       console.log("Connected to OpenAI Realtime API.");
 
+      ws.send(JSON.stringify({
+        "type": "session.update",
+        "session": {
+          "instructions": "You are acting as an alarm clock for the user. Your job is to wake the user up, and no matter what they say, you must do anything to wake them up. Be aware that the user may lie to you to stop the alarm, you must be very persistent and vigilant. Once you can confirm the user is no longer sleepy, you can call the stop_alarm function. YOU MUST CONFIRM THAT THE USER IS AWAKE AND NOT IN BED BEFORE CALLING THE STOP_ALARM FUNCTION.",
+          //output_audio_format: "g711_ulaw",
+          //output_audio_format: "g711_ulaw",
+          "input_audio_transcription": {
+            "model": "whisper-1"
+          },
+          "turn_detection": {
+            "type": "server_vad",
+            "threshold": 0.5,
+            "prefix_padding_ms": 300,
+            "silence_duration_ms": 200
+          },
+          "tools": [
+            {
+              "type": "function",
+              "name": "stop_alarm",
+              "description": "Stops the alarm. only call this function if the user is fully awake and not in bed. YOU MUST CONFIRM THAT THE USER IS AWAKE AND NOT IN BED BEFORE CALLING THIS FUNCTION. THE USER MAY LIE TO YOU TO STOP THE ALARM, SO YOU MUST BE VERY PERSISTENT AND VIGILANT.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "is_out_of_bed": { "type": "boolean" },
+                  "alertness_level": { 
+                    "type": "string",
+                    "enum": ["fully_awake", "somewhat_awake", "still_sleepy"]
+                  }
+                },
+              }
+            }
+          ],
+          "tool_choice": "auto",
+        }
+      }
+      ));
+
       // Send a request to create a new response
       ws.send(JSON.stringify({
         type: "response.create",
         response: {
-          modalities: ["text", "audio"],
-          instructions: "You are acting as an alarm clock for the user. Your job is to wake the user up, and no matter what they say, you must do anything to wake them up. once you can confirm the user is no longer sleepy, you can call the stop_alarm function.",
-          voice: "alloy",
-          tools: [
+          "modalities": ["text", "audio"],
+          "instructions": "You are acting as an alarm clock for the user. Your job is to wake the user up, and no matter what they say, you must do anything to wake them up. Be aware that the user may lie to you to stop the alarm, you must be very persistent and vigilant. Once you can confirm the user is no longer sleepy, you can call the stop_alarm function.",
+          "voice": "alloy",
+          //output_audio_format: "g711_ulaw",
+          //output_audio_format: "g711_ulaw",
+          "tools": [
             {
               "type": "function",
               "name": "stop_alarm",
@@ -116,8 +154,7 @@ function createWebsocketConnection() {
               }
             }
           ],
-          tool_choice: "auto",
-          output_audio_format: "g711_ulaw",
+          "tool_choice": "auto",
         }
       }))
 
@@ -171,21 +208,20 @@ function listenToWebSocket(ws, socket) {
       socket.emit('chat audio stream', response.delta);
       break;
 
-      //response is done. 
+      //do content park done instead of just .done
     case 'response.done':
       //console.log('Response done:', response);
       socket.emit('chat reply end');
       break;
 
     case 'response.content_part.added':
-      //console.log('Response content part added:', response);
       //socket.emit('chat reply', response.content_part);
       break;
 
       // Corrected case (previously 'response.conversation.item.ad'):
     case 'response.conversation.item.added':
       console.log('Conversation item added:', response);
-      socket.emit('chat reply', response.content_part);
+      //socket.emit('chat reply', response.content_part);
       break;
 
     case 'response.error':
@@ -198,6 +234,7 @@ function listenToWebSocket(ws, socket) {
       //console.log('Rate limits updated:', response.rate_limits);
       break;
 
+      //
     case 'response.audio_transcript.done':
       //console.log('Audio transcript done:', response.audio_transcript);
       break;
@@ -206,9 +243,7 @@ function listenToWebSocket(ws, socket) {
       //do nothing. In the future we can use this to add a pause to the audio stream. 
       break;
 
-    case 'response.content_part.done':
-      //do nothing.
-      break;
+          
 
     case 'response.output_item.done':
       //do nothing.
@@ -220,11 +255,18 @@ function listenToWebSocket(ws, socket) {
       socket.emit('chat reply stream', response.delta);
       break;
 
+    case 'conversation.item.input_audio_transcription.completed':
+      //transcription of user audio is complete. needs to be enabled in the session. 
+      console.log('transcription completed:', response.transcript);
+      socket.emit('chat transcript stream', response.transcript);
+
 
     case 'response.function_call_arguments.done':
-      console.log('Function call arguments done:', response.name);
+      console.log('Function call arguments done:', response);
       console.log('called wake up function');
-      socket.emit('stop alarm', response.arguments);
+      if (response.name == 'stop_alarm') {
+        socket.emit('stop alarm', response.arguments);
+      }
       break;
 
     case 'input_audio_buffer.speech_started':
@@ -234,6 +276,8 @@ function listenToWebSocket(ws, socket) {
     case 'input_audio_buffer.speech_stopped':
       //speech has stopped in turn detection. Server will now send us audio data. 
       //might be smart to stop audio stream on client side here. 
+      socket.emit('clear chat audio');
+
       break;
 
     case 'input_audio_buffer.committed':
@@ -278,7 +322,7 @@ io.on('connection', (socket) => {
       socket.emit('chat reply', 'Connected to the AI service.');
 
       socket.on('chat message', async (msg, type = 'text input') => {
-        console.log(`Message from user: ${msg}`);
+        //console.log(`Message from user: ${msg}`);
         if (ws && ws.readyState === WebSocket.OPEN) {
           try {
             await createResponse(ws, type, msg);
