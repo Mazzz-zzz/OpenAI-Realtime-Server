@@ -10,6 +10,8 @@ const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_WS_URL: process.env.OPENAI_WS_URL || 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview',
   PORT: process.env.PORT || 8383
+  AUTH_PASSWORD: process.env.AUTH_PASSWORD || 'your-secret-password'
+
 };
 
 
@@ -309,6 +311,14 @@ function listenToWebSocket(ws, socket) {
     ws.close();
   });
 }
+
+io.use((socket, next) => {
+  const password = socket.handshake.auth.password;
+  if (!password || password !== config.AUTH_PASSWORD) {
+    return next(new Error('Authentication error: Invalid password'));
+  }
+  next();
+});
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
