@@ -39,6 +39,7 @@ Before you begin, ensure you have met the following requirements:
    OPENAI_API_KEY=your_api_key_here
    OPENAI_WS_URL=wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview
    PORT=8383
+   AUTH_PASSWORD="set a password for auth here"
    ```
 
 ## Usage
@@ -57,4 +58,20 @@ Before you begin, ensure you have met the following requirements:
 - `public/index.html`: The main HTML file for the chat interface
 - `public/script.js`: Client-side JavaScript for handling chat functionality
 - `server.js`: Server-side code for Socket.IO and OpenAI integration
+
+## How to use with react native???
+Here's my example of how to connect to the server from react native:
+
+```
+const newSocket = io('http://<<Ip Goes here>>:8383', {
+                    transports: ['websocket'],
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000,
+                    auth: {
+                        password: '<<password goes here>>'
+                      }
+                });
+
+```
 

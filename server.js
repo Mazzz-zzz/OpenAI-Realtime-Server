@@ -9,7 +9,7 @@ require('dotenv').config();
 const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_WS_URL: process.env.OPENAI_WS_URL || 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview',
-  PORT: process.env.PORT || 8383
+  PORT: process.env.PORT || 8383,
   AUTH_PASSWORD: process.env.AUTH_PASSWORD || 'your-secret-password'
 
 };
